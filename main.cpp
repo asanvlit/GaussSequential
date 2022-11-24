@@ -117,7 +117,7 @@ double* gauss(double **a, double *y, int n) {
 }
 
 int main(int argc, char* argv[]) {
-    int n = 1000;
+    int n = 10;
 
     double **a = (double**) malloc(sizeof(double*) * n);
     double *y = (double *) malloc(sizeof(double) * n);
