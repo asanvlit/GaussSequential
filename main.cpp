@@ -3,12 +3,14 @@
 #include <math.h>
 #include <time.h>
 
-const double accuracy = 0.00001;
+const double accuracy = 1.e-6;
+const int maxValue = 20;
+const int minValue = 1;
 
 void printSystem(double **a, double *y, int n) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            printf("%f*x%i", a[i][j], j);
+            printf("%7.4f*x%i", a[i][j], j);
             if (j < n - 1) {
                 printf(" + ");
             }
@@ -17,18 +19,24 @@ void printSystem(double **a, double *y, int n) {
     }
 }
 
-void fillUpMatrixWithRandom(double **m, int n, int min, int max) {
+void printResultVector(double* resultV, int n) {
+    for (int i = 0; i < n; i++) {
+        printf("%7.4f ", resultV[i]);
+    }
+}
+
+void fillUpMatrixWithRandom(double **m, int n) {
     for (int i = 0; i < n; i++) {
         m[i] = (double*) malloc(sizeof(double)*n);
         for (int j = 0; j < n; j++) {
-            m[i][j] = rand() % max + min;
+            m[i][j] = rand() % maxValue + minValue;
         }
     }
 }
 
-void fillUpArrayWithRandom(double *m, int n, int min, int max) {
+void fillUpArrayWithRandom(double *v, int n) {
     for (int j = 0; j < n; j++) {
-        m[j] = rand() % max + min;
+        v[j] = rand() % maxValue + minValue;
     }
 }
 
@@ -43,17 +51,17 @@ void swapMatrixRows(double **a, int n, int r1, int r2) {
 double* gauss(double **a, double *y, int n) {
     int index; // номер ведущей строки
 
-    double* x = (double*) malloc(sizeof(double) * n);
+    double* x = (double*) malloc(sizeof(double) * n); // значения неизвестных
 
-    int k = 0; // номер текущей строки
-    while (k < n) {
-        // Поиск строки с максимальным a[i][k]
-        double max = fabs(a[k][k]); // сначала в качестве максимума берем ведущий элемент по диагонали на текущей строке
+    int iter = 0; // номер текущей строки
+    while (iter < n) {
+        // Поиск строки с максимальным a[i][iter]
+        double max = fabs(a[iter][iter]); // сначала в качестве максимума берем ведущий элемент по диагонали на текущей строке
 
-        index = k;
-        for (int i = k + 1; i < n; i++) { // двигаясь по столбцу ищем ведущую строку
-            if (fabs(a[i][k]) > max) {
-                max = fabs(a[i][k]);
+        index = iter;
+        for (int i = iter + 1; i < n; i++) { // двигаясь по столбцу ищем ведущую строку
+            if (fabs(a[i][iter]) > max) {
+                max = fabs(a[i][iter]);
                 index = i;
             }
         }
@@ -65,17 +73,17 @@ double* gauss(double **a, double *y, int n) {
         }
 
         // перестановка строк если ведущей стала другая
-        if (index != k) {
-            swapMatrixRows(a, n, index, k);
+        if (index != iter) {
+            swapMatrixRows(a, n, index, iter);
 
-            double temp = y[k];
-            y[k] = y[index];
+            double temp = y[iter];
+            y[iter] = y[index];
             y[index] = temp;
         }
 
         // Нормализация уравнений всех нижних уравнений
-        for (int i = k; i < n; i++) {
-            double temp = a[i][k];
+        for (int i = iter; i < n; i++) {
+            double temp = a[i][iter];
 
             // если уже нулевой, то продолжаем
             if (fabs(temp) < accuracy) {
@@ -89,27 +97,27 @@ double* gauss(double **a, double *y, int n) {
             y[i] = y[i] / temp;
 
             // не вычитать уравнение само из себя
-            if (i == k) {
+            if (i == iter) {
                 continue;
             }
 
             for (int j = 0; j < n; j++) {
-                a[i][j] = a[i][j] - a[k][j];
+                a[i][j] = a[i][j] - a[iter][j];
             }
 
-            y[i] = y[i] - y[k];
+            y[i] = y[i] - y[iter];
         }
-        k++;
+        iter++;
     }
 
     // обратный ход: начиная с нижней строки находим решения
-    for (k = n - 1; k >= 0; k--) {
+    for (iter = n - 1; iter >= 0; iter--) {
         // к этому моменту перебора остается одна неизветсная в строке, которая и равна числу из столбца значений
-        x[k] = y[k];
+        x[iter] = y[iter];
 
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i < iter; i++) {
             // вычитаем из столбца значений найденную неизвествую, умноженную на соответствующий элемент матрицы
-            y[i] = y[i] - a[i][k] * x[k];
+            y[i] = y[i] - a[i][iter] * x[iter];
         }
     }
 
@@ -117,27 +125,27 @@ double* gauss(double **a, double *y, int n) {
 }
 
 int main(int argc, char* argv[]) {
-    int n = 10;
+    int n;
+    printf_s("\nEnter the size of the matrix: ");
+    scanf_s("%d", &n);
 
     double **a = (double**) malloc(sizeof(double*) * n);
     double *y = (double *) malloc(sizeof(double) * n);
 
 //    srand(static_cast<unsigned int>(time(0)));
 
-    fillUpMatrixWithRandom(a, n, 1, 10);
-    fillUpArrayWithRandom(y, n, 1, 10);
+    fillUpMatrixWithRandom(a, n);
+    fillUpArrayWithRandom(y, n);
 
-//    printSystem(a, y, n);
+    printSystem(a, y, n);
 
     clock_t startTime = clock();
     double *x = gauss(a, y, n);
     clock_t endTime = clock();
 
-//    for (int i = 0; i < n; i++) {
-//        printf("x[%i] = %f\n", i, x[i]);
-//    }
+    printResultVector(x, n);
 
-    printf("Time spent:  %f s\n", ((double)(endTime - startTime) / CLOCKS_PER_SEC));
+    printf("\nTime spent:  %f s\n", ((double)(endTime - startTime) / CLOCKS_PER_SEC));
 
     return 0;
 }
