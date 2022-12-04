@@ -25,18 +25,13 @@ void printResultVector(double* resultV, int n) {
     }
 }
 
-void fillUpMatrixWithRandom(double **m, int n) {
+void fillUpSystemWithRandom(double **m, double *v, int n) {
     for (int i = 0; i < n; i++) {
         m[i] = (double*) malloc(sizeof(double)*n);
         for (int j = 0; j < n; j++) {
             m[i][j] = rand() % maxValue + minValue;
         }
-    }
-}
-
-void fillUpArrayWithRandom(double *v, int n) {
-    for (int j = 0; j < n; j++) {
-        v[j] = rand() % maxValue + minValue;
+        v[i] = rand() % maxValue + minValue;
     }
 }
 
@@ -134,8 +129,7 @@ int main(int argc, char* argv[]) {
 
 //    srand(static_cast<unsigned int>(time(0)));
 
-    fillUpMatrixWithRandom(a, n);
-    fillUpArrayWithRandom(y, n);
+    fillUpSystemWithRandom(a, y, n);
 
     printSystem(a, y, n);
 
